@@ -1,18 +1,26 @@
+// ============= OBECNÉ ============= //
+  bool tisk = false; // Proměnná pro zapnutí průběžnéh výpisu na seriovou linku
+// ============= OBECNÉ ============= //
+
+// ============= NASTAVENÍ MĚŘENÍ PRŮMĚRU ============= //
+  unsigned long lastAverageTime = 0; // Čas posledního výpočtu průměru
+  const unsigned long MAX_INTERVAL = 300000; // Délka měření průměru - 5 minut
+  const int MAX_READINGS = 5000; // Max. velikost pole pro data (10000 je moc)
+// ============= NASTAVENÍ MĚŘENÍ PRŮMĚRU ============= //
+
 // ============= MĚŘENÍ SRÁŽEK ============= //
-  const int RAIN_PIN = 2; // Definujte digitální pin připojený k výstupnímu pinu senzoru (OUT)
+  const uint8_t RAIN_PIN = 2; // Definujte digitální pin připojený k výstupnímu pinu senzoru (OUT)
   const unsigned long RAIN_THRESHOLD = 1000; // Minimální limit na překlopení
-  unsigned long rainLastAverageTime = 0; // Čas posledního výpočtu průměru
   volatile unsigned long rainTimeSinceLastTick = 0; // čas impulzu
   volatile unsigned long rainLastTick = 0; // Čas posledního impulzu
   volatile bool rainTickDetected = false; // Indikátor detekce přerušení
   const float RAIN_AMOUNT = 0.2794; // Množství srážek za jeden impulz
-  const int RAIN_MAX_READINGS = 10000; // Max. velikost pole pro data
-  const unsigned long RAIN_MAX_INTERVAL = 300000; // Délka měření průměru
-  float rainReadings[RAIN_MAX_READINGS];
-  unsigned long rainTimestamps[RAIN_MAX_READINGS];
+  float rainReadings[MAX_READINGS];
+  unsigned long rainTimestamps[MAX_READINGS];
   int rainNumReadings = 0;
   unsigned long rainLastUpdate = 0; // Časovač pro poslední změnu hodnoty
   const unsigned long RAIN_UPDATE_LIMIT = RAIN_THRESHOLD * 2; // Limit časovače pokud nepřijde nová hodnota
+  float rainAveragePerHour = 0;
 
   void rainTick()
   {
@@ -32,7 +40,7 @@
     // Smazání starších hodnot
       for (int i = 0; i < rainNumReadings; i++)
       {
-        if (currentTime - rainTimestamps[i] >= RAIN_MAX_INTERVAL)
+        if (currentTime - rainTimestamps[i] >= MAX_INTERVAL)
         {
           for (int j = i; j < rainNumReadings - 1; j++)
           {
@@ -49,11 +57,14 @@
     {
       if (rainTimeSinceLastTick > RAIN_THRESHOLD)
       {      
-        if (rainNumReadings < RAIN_MAX_READINGS) 
+        if (rainNumReadings < MAX_READINGS) 
         {
           rainReadings[rainNumReadings] = RAIN_AMOUNT;
           rainTimestamps[rainNumReadings] = currentTime;
-          Serial.print("Prší! ");
+          if (tisk == true)
+          {
+            Serial.println("Prší! ");
+          }
           rainNumReadings++;
         } 
       }
@@ -62,27 +73,30 @@
     } 
     else if (currentTime - rainLastUpdate > RAIN_UPDATE_LIMIT)
     {
-      if (rainNumReadings < RAIN_MAX_READINGS)
+      if (rainNumReadings < MAX_READINGS)
       {
         rainReadings[rainNumReadings] = 0;
         rainTimestamps[rainNumReadings] = currentTime;
-        Serial.print("Neprší! ");
+        if (tisk == true)
+        {
+          Serial.println("Neprší! ");
+        }
         rainNumReadings++;
       }
       rainLastUpdate = currentTime; // Reset časovače
-    }
-    
-    // Výpočet průměru a jeho výpis na seriovou linku
-    
-    if (currentTime - rainLastAverageTime >= RAIN_MAX_INTERVAL)
-    {  
-      float rainAverage = rainCalculateAverage();
-      Serial.println();
-      Serial.print("    AVG: "); // Odsazení řádku aby byli hodnoty vidět při výpisu akt rychlosti
-      Serial.print(rainAverage);
-      Serial.println(" mm/hod");
-      rainLastAverageTime = currentTime;
-    }
+    }  
+  }
+
+  void rainAverageF()
+  {
+    float rainAverage = rainCalculateAverage();
+    Serial.println();
+    Serial.println("Data srážkoměru");
+    Serial.print("AVG: "); // Odsazení řádku aby byli hodnoty vidět při výpisu akt rychlosti
+    Serial.print(rainAveragePerHour);
+    Serial.println(" mm/hod");
+    Serial.print("Počet měření: ");
+    Serial.print(rainNumReadings);
   }
 
   float rainCalculateAverage()
@@ -100,7 +114,7 @@
 
     // Přepočet na mm/h: (Celkové množství srážek / počet čtení) * (3600000 / maxInterval)
     float rainAveragePerInterval = total / rainNumReadings;
-    float rainAveragePerHour = (rainAveragePerInterval / RAIN_MAX_INTERVAL) * 3600000;
+    rainAveragePerHour = (rainAveragePerInterval / MAX_INTERVAL) * 3600000;
     
     /*
     Serial.println();
@@ -116,7 +130,7 @@
 // ============= MĚŘENÍ SRÁŽEK ============= //
 
 // ============= RYCHLOST VĚTRU ============= //
-  const int SPEED_PIN = 4; // Definujte digitální pin připojený k výstupnímu pinu senzoru (OUT)
+  const uint8_t SPEED_PIN = 4; // Definujte digitální pin připojený k výstupnímu pinu senzoru (OUT)
 
   // Nastavení detekce ticku
   const unsigned long SPEED_DEBOUCE_TIME = 20; // Debouce čas v ms
@@ -128,13 +142,8 @@
   float speed; // Proměnná pro ukládání rychlost větru
   float speedAverage; // Proměnná pro výpočet průměrného času
 
-  // Nastavení pro průměr
-  unsigned long speedDobaMereni = 10000; // Doba měření průměru
-  unsigned long speedLastAverageTime = 0; // Čas posledního výpočtu průměru
-  const int SPEED_MAX_READINGS = 10000;
-  const unsigned long SPEED_MAX_INTERVAL = 60000; // Délka měření průměru
-  int speedReadings[SPEED_MAX_READINGS];
-  unsigned long speedTimestamps[SPEED_MAX_READINGS];
+  int speedReadings[MAX_READINGS];
+  unsigned long speedTimestamps[MAX_READINGS];
   int speedNumReadings = 0;
 
   unsigned long speedLastUpdate = 0; // Časovač pro poslední změnu hodnoty
@@ -158,7 +167,7 @@
     // Smazání starších hodnot
     for (int i = 0; i < speedNumReadings; i++)
     {
-      if (currentTime - speedTimestamps[i] >= SPEED_MAX_INTERVAL)
+      if (currentTime - speedTimestamps[i] >= MAX_INTERVAL)
       {
         for (int j = i; j < speedNumReadings - 1; j++)
         {
@@ -175,11 +184,13 @@
       if (speedTimeSinceLastTick > SPEED_THRESHOLD)
       {
         speed = (1000 / speedTimeSinceLastTick) * 2.4;
-        Serial.print("Akt: ");
-        Serial.print(speed);
-        Serial.println(" km/h");
-        
-        if (speedNumReadings < SPEED_MAX_READINGS) 
+        if (tisk == true)
+        {
+          Serial.print("Akt: ");
+          Serial.print(speed);
+          Serial.println(" km/h");
+        }
+        if (speedNumReadings < MAX_READINGS) 
         {
           speedReadings[speedNumReadings] = speed;
           speedTimestamps[speedNumReadings] = currentTime;
@@ -193,7 +204,7 @@
     else if (currentTime - speedLastUpdate > SPEED_UPDATE_LIMIT)
     {
       speed = 0;
-      if (speedNumReadings < SPEED_MAX_READINGS)
+      if (speedNumReadings < MAX_READINGS)
       {
         speedReadings[speedNumReadings] = speed;
         speedTimestamps[speedNumReadings] = currentTime;
@@ -201,17 +212,20 @@
       }
       speedLastUpdate = currentTime; // Reset časovače
     }
-    
-    // Výpočet průměru a jeho výpis na seriovou linku
-    if (currentTime - speedLastAverageTime >= SPEED_MAX_INTERVAL)
-    {  
-      float speedAverage = speedCalculateAverage();
-      Serial.print("    AVG: "); // Odsazení řádku aby byli hodnoty vidět při výpisu akt rychlosti
-      Serial.print(speedAverage);
-      Serial.println(" km/h");
-      speedLastAverageTime = currentTime;
-    }
   }
+
+  void speedAverageF()
+  {
+    speedAverage = speedCalculateAverage();
+    Serial.println();
+    Serial.println("Data o rychlosti větru");
+    Serial.print("AVG: "); // Odsazení řádku aby byli hodnoty vidět při výpisu akt rychlosti
+    Serial.print(speedAverage);
+    Serial.println(" km/h");
+    Serial.print("Počet měření: ");
+    Serial.print(speedNumReadings);
+  }
+
 
   float speedCalculateAverage()
   {
@@ -226,32 +240,31 @@
       total += speedReadings[i];
     }
 
-    Serial.print("    E: ");
-    Serial.print(total);
-    Serial.print(" / n: ");
-    Serial.print(speedNumReadings);
+    //Serial.print("    E: ");
+    //Serial.print(total);
+    //Serial.print(" / n: ");
+    //Serial.print(speedNumReadings);
 
     return static_cast<float>(total) / speedNumReadings;
   }
 // ============= RYCHLOST VĚTRU ============= //
 
 // ============= SMĚR VĚTRU ============= //
- const int DIRECTION_PIN = 3; // Mezi pinem a 3V3 je za 20kOhm odpor
+ const uint8_t DIRECTION_PIN = 3; // Mezi pinem a 3V3 je za 20kOhm odpor
  int dir; // Proměnná pro uložení čtení z pinu
  float direction = 0; // Proměnná pro uložení azimutu
  float dirAverage; // Proměnná pro uložení průměrného směru
  String dirTxt; // Vlákno pro uložení textové hodnoty směru
+ int dirDelay = 100; // Směr měříme jednou za 100 milis
 
  float sumSinDir = 0;
  float sumCosDir = 0;
  int dirNumdirReadings = 0;
 
- const int DIR_MAX_READINGS = 10000;
- const unsigned long DIR_MAX_INTERVAL = 60000;
- int dirReadings[DIR_MAX_READINGS];
- unsigned long dirTimestamps[DIR_MAX_READINGS];
+ int dirReadings[MAX_READINGS];
+ unsigned long dirTimestamps[MAX_READINGS];
 
- unsigned long dirLastAverageTime = 0; // Čas posledního výpočtu průměru
+ unsigned long dirlastAverageTime = 0; // Čas posledního výpočtu průměru
 
   void directionF()
   {
@@ -260,7 +273,7 @@
     // Smazání starších hodnot
       for (int i = 0; i < dirNumdirReadings; i++)
       {
-        if (currentTime - dirTimestamps[i] >= DIR_MAX_INTERVAL)
+        if (currentTime - dirTimestamps[i] >= MAX_INTERVAL)
         {
           for (int j = i; j < dirNumdirReadings - 1; j++)
           {
@@ -293,52 +306,185 @@
       else direction = 0;
     
     // Výpis hodnot 
+    /*
       Serial.print(direction);
       Serial.print(", ");
       Serial.print(dirTxt);
       Serial.print(", ");
       Serial.println(dir);
       delay(100);
-    
+    */
+
     // Uložení čtení a načtení hodnoty
-      if (dirNumdirReadings < DIR_MAX_READINGS)
+      if (dirNumdirReadings < MAX_READINGS)
       {
         dirReadings[dirNumdirReadings] = direction;
         dirTimestamps[dirNumdirReadings] = currentTime;
         dirNumdirReadings++;
       }
+    delay(dirDelay);
+  }
 
-    // Výpočet průměru
-      if (currentTime - dirLastAverageTime >= DIR_MAX_INTERVAL)
+  void directionAverageF()
+  {
+    sumSinDir = 0;
+    sumCosDir = 0;
+    for (int i = 0; i < dirNumdirReadings; i++)
+    {
+      sumSinDir += sin(radians(dirReadings[i]));
+      sumCosDir += cos(radians(dirReadings[i]));
+    }
+    if (dirNumdirReadings > 0)
       {
-        sumSinDir = 0;
-        sumCosDir = 0;
-        for (int i = 0; i < dirNumdirReadings; i++)
+        dirAverage = atan2(sumSinDir / dirNumdirReadings, sumCosDir / dirNumdirReadings);
+        dirAverage = degrees(dirAverage);
+        if (dirAverage < 0)
         {
-          sumSinDir += sin(radians(dirReadings[i]));
-          sumCosDir += cos(radians(dirReadings[i]));
+          dirAverage += 360;
         }
-        if (dirNumdirReadings > 0)
-          {
-            dirAverage = atan2(sumSinDir / dirNumdirReadings, sumCosDir / dirNumdirReadings);
-            dirAverage = degrees(dirAverage);
-            if (dirAverage < 0)
-            {
-              dirAverage += 360;
-            }
-          }
-      // Výpis na linku
-      Serial.print("Průměrný směr větru: ");
-      Serial.print(dirAverage);
-      Serial.println(" °");
-
-      dirLastAverageTime = currentTime;
       }
-
+ 
+    // Výpis na linku
+    Serial.println();
+    Serial.print("Průměrný směr větru: ");
+    Serial.print(dirAverage);
+    Serial.println(" °");
+    Serial.print("Počet měření: ");
+    Serial.print(dirNumdirReadings);
   }
 // ============= SMĚR VĚTRU ============= //
 
+// ============= NAPĚTÍ BATERKY ============= //
+  #include <Wire.h>
+  #include <SPI.h>
+  #include <ESP32AnalogRead.h> 
+  ESP32AnalogRead adc;
+  #define ADCpin 0
+  #define DeviderRatio 1.7693877551  // Delic napeti z akumulatoru 1MOhm + 1.3MOhm
+  float bat_voltage = 0;
 
+  void baterkaF()
+  {
+    bat_voltage = adc.readVoltage() * DeviderRatio;
+    Serial.println();
+    Serial.print("Battery Voltage = " );
+    Serial.print(bat_voltage);
+    Serial.println(" V");
+  }
+// ============= NAPĚTÍ BATERKY ============= //
+
+// ============= TEPLOTA DALLAS DS18B20 ============= //
+  #include <OneWire.h>
+  #include <DallasTemperature.h>
+  #define pinTeplota 5 //adresa externí teploty 10
+
+  OneWire oneWire(pinTeplota); // nastavení komunikace senzoru přes pin          
+  DallasTemperature sensors(&oneWire); // převedeme onewire do Dallasu  
+  float teplotaPotok = 0; // Proměnná pro teplotu Dallas v potoce
+
+  void teplotaPotokF()
+  {
+    Serial.print("Teplota v potoce = ");
+    sensors.requestTemperatures();
+    teplotaPotok = sensors.getTempCByIndex(0);
+    Serial.print(teplotaPotok);
+    Serial.println(" °C");
+  }
+// ============= TEPLOTA DALLAS DS18B20 ============= //
+
+// ============= BME280 ============= //
+  #include <Adafruit_Sensor.h>
+  #include <Adafruit_BME280.h>
+  #define BME280_ADDRESS (0x77)   // (0x76) cut left and solder left pad on board
+  #define SEALEVELPRESSURE_HPA (1013.25)
+  Adafruit_BME280 bme; // I2C
+  float temp = 0; // Proměnná pro teplotu BME280
+  float press = 0; // Proměnná pro tlak BME280
+  float hum = 0; // Proměnná pro vlhkost BME280
+
+  void BME280F()
+  {
+    bme.takeForcedMeasurement();
+
+    Serial.print("Teplota = ");
+    temp = bme.readTemperature();
+    Serial.print(temp);
+    Serial.println(" °C");
+
+    Serial.print("Tlak = ");
+    press = bme.readPressure() / 100.0F;
+    Serial.print(press);
+    Serial.println(" hPa");
+
+    Serial.print("Vlhkost = ");
+    hum = bme.readHumidity();
+    Serial.print(hum);
+    Serial.println(" %");
+  }
+// ============= BME280 ============= //
+
+// ============= WIFI+TMEP ============= //
+  #include <WiFi.h>
+  #include <esp_wifi.h>
+  #include <HTTPClient.h>
+
+  const char* ssid = "Kopretina"; //"Wifi nova"
+  const char* password = "SvataKaterina"; //"ajrad1961"
+
+  String serverName = "http://93hapu-ytsm5k.tmep.cz/index.php?"; // Doména lubnovenkovni.tmep.cz a té jsou nastavené přeposílače
+
+  void wifiF()
+  {
+    Serial.println();
+    Serial.print("WiFi = ");
+    Serial.print(WiFi.RSSI());
+    Serial.println(" dB");
+
+    if(WiFi.status()== WL_CONNECTED)
+    {
+        HTTPClient http;
+
+        //GUID
+        String serverPath = serverName 
+        + "teplota=" + temp 
+        + "&vlhkost=" + hum
+        + "&tlak=" + press
+        + "&srazky=" + rainAveragePerHour
+        + "&direction=" + dirAverage
+        + "&rychlost=" + speedAverage
+        + "&teplotapotok=" + teplotaPotok
+        + "&v=" + bat_voltage
+        + "&rssi=" + WiFi.RSSI();
+
+        Serial.println(serverPath);
+        
+        // zacatek http spojeni
+        http.begin(serverPath.c_str());
+        
+        // http get request
+        int httpResponseCode = http.GET();
+        
+        if (httpResponseCode>0) 
+        {
+          Serial.print("HTTP Response code: ");
+          Serial.println(httpResponseCode);
+          String payload = http.getString();
+          Serial.println(payload);
+        }
+        else 
+        {
+          Serial.print("Error code: ");
+          Serial.println(httpResponseCode);
+        }
+        // Uvolneni
+        http.end();
+    }
+    else 
+    {
+      Serial.println("Wi-Fi odpojeno");
+    }
+  }
+// ============= WIFI+TMEP ============= //
 
 void setup() 
 {
@@ -346,33 +492,96 @@ void setup()
   delay(100); 
 
   // ============= MĚŘENÍ SRÁŽEK ============= //
-  pinMode(RAIN_PIN, INPUT);
-  attachInterrupt(digitalPinToInterrupt(RAIN_PIN), rainTick, FALLING);
+    pinMode(RAIN_PIN, INPUT);
+    attachInterrupt(digitalPinToInterrupt(RAIN_PIN), rainTick, FALLING);
   // ============= MĚŘENÍ SRÁŽEK ============= //
 
   // ============= RYCHLOST VĚTRU ============= //
-  pinMode(SPEED_PIN, INPUT);
-  attachInterrupt(digitalPinToInterrupt(SPEED_PIN), speedTick, FALLING);
+    pinMode(SPEED_PIN, INPUT);
+    attachInterrupt(digitalPinToInterrupt(SPEED_PIN), speedTick, FALLING);
   // ============= RYCHLOST VĚTRU ============= //
 
   // ============= SMĚR VĚTRU ============= //
-  pinMode(DIRECTION_PIN, INPUT);
+   pinMode(DIRECTION_PIN, INPUT);
   // ============= SMĚR VĚTRU ============= //
 
+  // ============= WIFI+TMEP ============= //
+    int pokus = 0; // promena pro pocitani pokusu o pripojeni
+
+    WiFi.begin(ssid, password);
+    Serial.println("Pripojovani");
+    while(WiFi.status() != WL_CONNECTED) 
+    {
+    delay(500);
+    Serial.print(".");
+    if(pokus > 20) // Pokud se behem 10s nepripoji, uspi se na 300s = 5min
+    {
+      esp_sleep_enable_timer_wakeup(300 * 1000000);
+      esp_deep_sleep_start();
+    }
+    pokus++;
+    }
+
+    Serial.println();
+    Serial.print("Pripojeno do site, IP adresa zarizeni: ");
+    Serial.println(WiFi.localIP());
+  // ============= WIFI+TMEP ============= //
+
+  // ============= BME280 ============= //
+    Serial.println("BME280 test");
+    Wire.begin (19, 18); // for ESP32 + uŠup
+    if (! bme.begin(BME280_ADDRESS)) {
+        Serial.println("Could not find a valid BME280 sensor, check wiring, address, sensor ID!");
+        Serial.print("SensorID was: 0x"); Serial.println(bme.sensorID(),16);
+        Serial.print("        ID of 0xFF probably means a bad address, a BMP 180 or BMP 085\n");
+        Serial.print("        ID of 0x56-0x58 represents a BMP 280,\n");
+        Serial.print("        ID of 0x60 represents a BME 280.\n");
+        Serial.print("        ID of 0x61 represents a BME 680.\n");
+        while (1) delay(10);
+    }
+    Serial.println("-- Weather Station Scenario --");
+    Serial.println("forced mode, 1x temperature / 1x humidity / 1x pressure oversampling,");
+    Serial.println("filter off");
+    bme.setSampling(Adafruit_BME280::MODE_FORCED,
+                  Adafruit_BME280::SAMPLING_X1, // temperature
+                  Adafruit_BME280::SAMPLING_X1, // pressure
+                  Adafruit_BME280::SAMPLING_X1, // humidity
+                  Adafruit_BME280::FILTER_OFF   );
+    
+    Serial.println("-- Default Test --");
+    Serial.println(); 
+  // ============= BME280 ============= //
+
+  // ============= NAPĚTÍ BATERKY ============= //
+   adc.attach(ADCpin); // NASTAVENI MERENI NAPETI AKUMULATORU
+  // ============= NAPĚTÍ BATERKY ============= //
+
+  // ============= TEPLOTA DALLAS DS18B20 ============= //
+  sensors.begin();
+  // ============= TEPLOTA DALLAS DS18B20 ============= //
 
 }
 
 void loop() 
 {
   unsigned long currentTime = millis();
-
   rainF(); // Volání funkce na změření deště
-
   speedF(); // Volání funkce na změření rychlosti větru
-
   directionF(); // Volání funkce na změření směru větru
 
-  
+  // Kod bude průběžně měřit a každých MaxInterval udělá průměry a pošle hodnoty
+  //if (currentTime - lastAverageTime >= MAX_INTERVAL)
+  if (currentTime - lastAverageTime >= 60000) // Testovací interval 1 minuta
+  {
+    rainAverageF();
+    speedAverageF();
+    directionAverageF();
+    baterkaF();
+    teplotaPotokF();
+    BME280F();
+    wifiF();
+    lastAverageTime = currentTime;
+  } 
 }
 
 
