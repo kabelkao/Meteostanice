@@ -1,5 +1,5 @@
 // ============= OBECNÉ ============= //
-  bool tisk = false; // Proměnná pro zapnutí průběžnéh výpisu na seriovou linku
+  bool tisk = false; // Proměnná pro zapnutí průběžného výpisu na seriovou linku
 // ============= OBECNÉ ============= //
 
 // ============= NASTAVENÍ MĚŘENÍ PRŮMĚRU ============= //
