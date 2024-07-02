@@ -5,13 +5,13 @@
 // ============= NASTAVENÍ MĚŘENÍ PRŮMĚRU ============= //
   unsigned long lastAverageTime = 0; // Čas posledního výpočtu průměru
   const unsigned long MAX_INTERVAL = 300000; // Délka měření průměru - 5 minut
-  //const int MAX_READINGS = 5000; // Max. velikost pole pro data (10000 je moc)
-  const int RAIN_MAX_READINGS = 100;
+  //const int MAX_READINGS = 5000; // Max. velikost pole pro data
+  const int RAIN_MAX_READINGS = 500;
   // Odhad je max. 85 pro data pro srážky
-  const int SPEED_MAX_READINGS = 5000;
+  const int SPEED_MAX_READINGS = 10000;
   // 0-26k, 16k je dost pomalé
   // Odhad je max. 26000 pro data rychlosti větru
-  const int DIR_MAX_READINGS = 3100;
+  const int DIR_MAX_READINGS = 3500;
   // Odhad je max. 3000 pro data směru větru (měření nejdříve po 100 ms)
 // ============= NASTAVENÍ MĚŘENÍ PRŮMĚRU ============= //
 
@@ -28,7 +28,7 @@
   unsigned long rainLastUpdate = 0; // Časovač pro poslední změnu hodnoty
   const unsigned long RAIN_UPDATE_LIMIT = RAIN_THRESHOLD * 2; // Limit časovače pokud nepřijde nová hodnota
   float rainAveragePerHour = 0;
-  int rainMem = 0; // Velikost zaplnění paměti pro data
+  float rainMem = 0; // Velikost zaplnění paměti pro data
 
   void rainTick()
   {
@@ -154,7 +154,7 @@
   unsigned long speedLastUpdate = 0; // Časovač pro poslední změnu hodnoty
   const unsigned long SPEED_UPDATE_LIMIT = 10000; // Limit časovače pokud nepřijde nová hodnota
 
-  int speedMem = 0; // Velikost zaplnění paměti pro data
+  float speedMem = 0; // Velikost zaplnění paměti pro data
  
   void speedTick()
   {
@@ -251,9 +251,9 @@
       total += speedReadings[i];
     }
 
-    return static_cast<float>(total) / speedNumReadings;
-
     speedMem = (float)speedNumReadings / SPEED_MAX_READINGS * 100;
+    
+    return static_cast<float>(total) / speedNumReadings;
   }
 // ============= RYCHLOST VĚTRU ============= //
 
@@ -451,7 +451,7 @@
   const char* ssid = "***";
   const char* password = "***";
 
-  String serverName = "http://****.tmep.cz/index.php?";
+  String serverName = "http://***.tmep.cz/index.php?";
 
   void wifiF()
   {
@@ -581,6 +581,19 @@ void setup()
     sensors.begin();
   // ============= TEPLOTA DALLAS DS18B20 ============= //
 
+  // ============= 0. kolo odečtu ============= //
+  rainF(); // Volání funkce na změření deště
+  speedF(); // Volání funkce na změření rychlosti větru
+  directionF(); // Volání funkce na změření směru větru
+
+  rainAverageF();
+  speedAverageF();
+  directionAverageF();
+  baterkaF();
+  teplotaPotokF();
+  BME280F();
+  wifiF();
+  // ============= 0. kolo odečtu ============= //
 }
 
 void loop() 
