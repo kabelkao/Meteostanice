@@ -13,6 +13,7 @@
 - odpor 1k pro MS-WH-SP-RG srážkoměr mezi 3V3 a DATA
 - kondenzátor 100nF pro WH-SP-WS01 čidlo rychlosti větru mezi GND a DATA
 - kondenzátor 100nF pro MS-WH-SP-RG srážkoměr mezi GND a DATA
+- data z čidel rychlosti větru, směru větru a srážek jsou z původních kabelů s koncovkou 2xRJ11 svedeny do jednoho kabelu s koncovkou 1xRJ45 která je poté dovedena cca 8m k radiačnímu štítu kde je deska, data z čidla DS18B20 jsou vedena cca 10m pomocí kabelu RJ11 k desce
 
 Napájení je provedeno trvalým připojením přes USB nabíječku 230V s výstupem 5V na desku LaskaKit Meteo Mini skrze BATTERY vstup s připojenou USB-C redukcí.
 
