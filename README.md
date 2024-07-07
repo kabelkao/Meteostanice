@@ -39,6 +39,23 @@ Napájení je provedeno trvalým připojením přes USB nabíječku 230V s výst
 - Jednou za 5 minut se provede výpočet průměrných hodnot větru a deště a jejich odeslání na TMEP.cz společně s aktuálními hodnotami z čidla BME280 a Dallas DS18B20
 - Příklad odesílaných dat: _/index.php?teplota=25.45 &vlhkost=39.99 &tlak=986.41 &srazky==0.09 &direction==223.22 &rychlost==2.30 &teplotapotok==24.81 &rainMem=30.40 &speedMem=0.30 &dirMem=85.20 &v=4.97 &rssi=-53_, kde položky _Mem_ jsou % vyjádření zaplnění pole paměti pro danou měřenou proměnnou
 
+# Měření
+**Teplota/Tlak/Vlhkost**
+https://lubnovenkovni.tmep.cz/
+
+**Teplota vody v potoce**
+https://lubnopotok.tmep.cz/
+
+**Množství srážek**
+https://lubnodest.tmep.cz/
+
+**Rychlost větru**
+https://lubnovitrrychlost.tmep.cz/
+
+**Směr větru**
+https://lubnovitrsmer.tmep.cz/
+
+
 **Zdroje/Inspirace:**
 - https://www.instructables.com/Solar-Powered-WiFi-Weather-Station-V30/
 
