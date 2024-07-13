@@ -1,4 +1,5 @@
 **Důležité**
+
 Kód je nutné kompilovat s verzí 2.0.9 knihovny pro desky s ESP32-C3! Jinak nefunguje čtení napětí napájení.
 
 # Hardware
