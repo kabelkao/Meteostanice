@@ -1,3 +1,6 @@
+**Důležité**
+Kód je nutné kompilovat s verzí 2.0.9 knihovny pro desky s ESP32-C3! Jinak nefunguje čtení napětí napájení.
+
 # Hardware
 
 **Meteostanice založená na desce LaskaKit Meteo Mini** (https://www.laskakit.cz/laskakit-meteo-mini/?variantId=10473) ke které jsou připojena čidla:
