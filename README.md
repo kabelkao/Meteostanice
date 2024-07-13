@@ -1,6 +1,6 @@
 **Důležité**
-
-Kód je nutné kompilovat s verzí 2.0.9 knihovny pro desky s ESP32-C3! Jinak nefunguje čtení napětí napájení.
+- kód je nutné kompilovat s verzí 2.0.9 knihovny pro desky s ESP32-C3! Jinak nefunguje čtení napětí napájení
+- kód pro čtení a výpočet množství srážek je chybný, na opravě se pracuje
 
 # Hardware
 
